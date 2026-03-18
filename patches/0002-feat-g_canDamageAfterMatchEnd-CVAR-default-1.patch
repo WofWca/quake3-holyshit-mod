@@ -1,0 +1,76 @@
+From 112680db967489da9b3221b837f2ddfa2ae66edd Mon Sep 17 00:00:00 2001
+From: WofWca <wofwca@protonmail.com>
+Date: Wed, 18 Mar 2026 21:40:44 +0400
+Subject: [PATCH] feat: `g_canDamageAfterMatchEnd` CVAR, default `1`
+
+---
+ code/game/g_combat.c | 16 +++++++++++++---
+ code/game/g_cvar.h   |  2 ++
+ code/game/g_team.c   |  2 ++
+ 3 files changed, 17 insertions(+), 3 deletions(-)
+
+diff --git a/code/game/g_combat.c b/code/game/g_combat.c
+index cfe1ee08..ba4df138 100644
+--- a/code/game/g_combat.c
++++ b/code/game/g_combat.c
+@@ -41,10 +41,12 @@ void AddScore( gentity_t *ent, vec3_t origin, int score ) {
+ 	// Ensure that the score doesn't change after match end
+ 	// (when `level.intermissionQueued`).
+ 	// This check is not present in the original Quake III Arena.
+-	// This fixes a perhaps funny bug where you could `\kill`
++	// It has been added mainly for `g_canDamageAfterMatchEnd`.
++	// This also fixes a perhaps funny bug where you could `\kill`
+ 	// right after winning and it would decrease your score.
+ 	//
+-	// Note that we do not early-return from this function.
++	// Note that we do not early-return from this function,
++	// because we have to run `AddTeamScore()` in both cases.
+ 	// We'll do the same kind of check in `AddTeamScore()`.
+ 	if ( !level.intermissionQueued ) {
+ 		// show score plum
+@@ -967,7 +969,15 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
+ 
+ 	// the intermission has allready been qualified for, so don't
+ 	// allow any extra scoring
+-	if ( level.intermissionQueued ) {
++	// When `g_canDamageAfterMatchEnd != 0`,
++	// we'll do the `level.intermissionQueued` check
++	// in `AddScore` and `AddTeamScore` instead.
++	// Note that when `g_canDamageAfterMatchEnd 1`
++	// it would make sense to check `leve.intermissiontime` instead,
++	// but that would be further from the original game,
++	// because `level.intermissionQueued` gets reset to 0
++	// when intermission starts.
++	if ( level.intermissionQueued && !g_canDamageAfterMatchEnd.integer ) {
+ 
+ 		// With a special exception for gibbing bodies.
+ 		// This was introduced in https://github.com/ec-/baseq3a/pull/50.
+diff --git a/code/game/g_cvar.h b/code/game/g_cvar.h
+index 15b6d73e..644eddcd 100644
+--- a/code/game/g_cvar.h
++++ b/code/game/g_cvar.h
+@@ -33,6 +33,8 @@ G_CVAR( g_synchronousClients, "g_synchronousClients", "0", CVAR_SYSTEMINFO, 0, q
+ 
+ G_CVAR( g_friendlyFire, "g_friendlyFire", "0", CVAR_ARCHIVE, 0, qtrue, qfalse )
+ 
++G_CVAR( g_canDamageAfterMatchEnd, "g_canDamageAfterMatchEnd", "1", CVAR_ARCHIVE, 0, qtrue, qfalse )
++
+ G_CVAR( g_autoJoin, "g_autoJoin", "1", CVAR_ARCHIVE, 0, qfalse, qfalse )
+ G_CVAR( g_teamForceBalance, "g_teamForceBalance", "0", CVAR_ARCHIVE, 0, qfalse, qfalse )
+ 
+diff --git a/code/game/g_team.c b/code/game/g_team.c
+index 50a3fab8..53ee9e53 100644
+--- a/code/game/g_team.c
++++ b/code/game/g_team.c
+@@ -126,6 +126,8 @@ void AddTeamScore( vec3_t origin, team_t team, int score ) {
+ 	// See the same check in `AddScore()`.
+ 	// This has effect in flag-like game modes such as Harvest
+ 	// where it's possible for both teams to capture at the same time.
++	// And also with `g_canDamageAfterMatchEnd 1` with `GT_TEAM` game type,
++	// and maybe more.
+ 	if ( level.intermissionQueued ) {
+ 		return;
+ 	}
+-- 
+2.43.0
+

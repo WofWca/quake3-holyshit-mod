@@ -1,0 +1,75 @@
+From f280e7cc05cbf5566b231c7e07f9ca69f1dd48db Mon Sep 17 00:00:00 2001
+From: WofWca <wofwca@protonmail.com>
+Date: Mon, 16 Mar 2026 22:25:29 +0400
+Subject: [PATCH] fix: don't change scores after match end
+
+---
+ code/game/g_combat.c | 18 +++++++++++++++---
+ code/game/g_local.h  |  2 +-
+ code/game/g_team.c   |  7 +++++++
+ 3 files changed, 23 insertions(+), 4 deletions(-)
+
+diff --git a/code/game/g_combat.c b/code/game/g_combat.c
+index 5cf02636..cfe1ee08 100644
+--- a/code/game/g_combat.c
++++ b/code/game/g_combat.c
+@@ -37,10 +37,22 @@ void AddScore( gentity_t *ent, vec3_t origin, int score ) {
+ 	if ( level.warmupTime ) {
+ 		return;
+ 	}
+-	// show score plum
+-	ScorePlum(ent, origin, score);
++
++	// Ensure that the score doesn't change after match end
++	// (when `level.intermissionQueued`).
++	// This check is not present in the original Quake III Arena.
++	// This fixes a perhaps funny bug where you could `\kill`
++	// right after winning and it would decrease your score.
+ 	//
+-	ent->client->ps.persistant[PERS_SCORE] += score;
++	// Note that we do not early-return from this function.
++	// We'll do the same kind of check in `AddTeamScore()`.
++	if ( !level.intermissionQueued ) {
++		// show score plum
++		ScorePlum(ent, origin, score);
++		//
++		ent->client->ps.persistant[PERS_SCORE] += score;
++	}
++
+ 	if ( g_gametype.integer == GT_TEAM ) {
+ 		AddTeamScore( origin, ent->client->ps.persistant[PERS_TEAM], score );
+ 	}
+diff --git a/code/game/g_local.h b/code/game/g_local.h
+index 2072f807..7931f2dd 100644
+--- a/code/game/g_local.h
++++ b/code/game/g_local.h
+@@ -418,7 +418,7 @@ typedef struct {
+ 										// wait INTERMISSION_DELAY_TIME before
+ 										// actually going there so the last
+ 										// frag can be watched.  Disable future
+-										// kills during this delay
++										// scores during this delay
+ 	int			intermissiontime;		// time the intermission was started
+ 	qboolean	readyToExit;			// at least one client wants to exit
+ 	int			exitTime;
+diff --git a/code/game/g_team.c b/code/game/g_team.c
+index 62362831..50a3fab8 100644
+--- a/code/game/g_team.c
++++ b/code/game/g_team.c
+@@ -123,6 +123,13 @@ void AddTeamScore( vec3_t origin, team_t team, int score ) {
+ 		return;
+ 	}
+ 
++	// See the same check in `AddScore()`.
++	// This has effect in flag-like game modes such as Harvest
++	// where it's possible for both teams to capture at the same time.
++	if ( level.intermissionQueued ) {
++		return;
++	}
++
+ 	eventParm = -1;
+ 	otherTeam = OtherTeam( team );
+ 
+-- 
+2.43.0
+
