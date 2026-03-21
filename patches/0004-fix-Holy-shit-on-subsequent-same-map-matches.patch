@@ -1,0 +1,90 @@
+From fd6a94649c459a51792b8751dc33c06eb8a5925d Mon Sep 17 00:00:00 2001
+From: WofWca <wofwca@protonmail.com>
+Date: Sat, 21 Mar 2026 16:47:29 +0400
+Subject: [PATCH] fix: "Holy shit!" on subsequent same map matches
+
+Reproductions steps:
+1. `devmap q3dm1; addbot ranger 5; set fraglimit 1;`
+   `set timescale 0.25`
+2. Kill each other with a rocket, so that "Holy shit!" plays.
+3. "Ready up" at the intermission, so that the new match starts,
+   on the same map with no map reload.
+4. Kill each other with a rocket again.
+
+The problem is that `ExitLevel` resets all the actual scores,
+but it doesn't reset `isWinner`, `isAlmostWinner`
+and `imaginaryScore`.
+
+So let's just ensure to set our fields at match end,
+as suggested in out TODO comment.
+---
+ code/game/g_combat.c |  5 -----
+ code/game/g_main.c   | 29 +++++++++++++++++++++++++++++
+ 2 files changed, 29 insertions(+), 5 deletions(-)
+
+diff --git a/code/game/g_combat.c b/code/game/g_combat.c
+index b22c316d..060e8370 100644
+--- a/code/game/g_combat.c
++++ b/code/game/g_combat.c
+@@ -55,11 +55,6 @@ void AddScore( gentity_t *ent, vec3_t origin, int score ) {
+ 		ent->client->ps.persistant[PERS_SCORE] += score;
+ 	}
+ #ifndef NO_HOLYSHIT_MOD
+-	// TODO refactor: we should also copy actual scores to each player,
+-	// when the match ends, to make sure that
+-	// the imaginary score and the actual score are equal at that moment.
+-	// But maybe it's fine since this is the only function
+-	// that writes to scores.
+ 	ent->client->pers.imaginaryScore += score;
+ #endif
+ 
+diff --git a/code/game/g_main.c b/code/game/g_main.c
+index 7431e664..984c1a54 100644
+--- a/code/game/g_main.c
++++ b/code/game/g_main.c
+@@ -1396,6 +1396,7 @@ static void CheckExitRules( void ) {
+ 
+ 			if ( cl->ps.persistant[PERS_SCORE] >= g_fraglimit.integer ) {
+ #ifndef NO_HOLYSHIT_MOD
++				InitHolyshit();
+ 				cl->pers.isWinner = qtrue;
+ #endif
+ 
+@@ -1424,6 +1425,34 @@ static void CheckExitRules( void ) {
+ }
+ 
+ #ifndef NO_HOLYSHIT_MOD
++/*
++=============
++InitHolyshit
++
++Sync imaginary scores to real scores, reset the `isWinner` fields.
++
++This should be called at match end, to ensure that the relevant fields
++don't keep values from the previous match or something,
++such as after `ExitLevel()`.
++=============
++*/
++static void InitHolyshit( void ) {
++	int			i;
++	gclient_t	*cl;
++
++	for ( i = 0 ; i < level.maxclients ; i++ ) {
++		cl = level.clients + i;
++
++		// Not checking `connected` and `sessionTeam` as in `CheckExitRules`,
++		// just copy scores for all players as is.
++
++		cl->pers.imaginaryScore = cl->ps.persistant[PERS_SCORE];
++		// And ensure that these are cleared.
++		cl->pers.isWinner = qfalse;
++		cl->pers.isAlmostWinner = qfalse;
++	}
++}
++
+ static void PlayGlobalHolyshitSound() {
+ 	gentity_t *te;
+ 
+-- 
+2.43.0
+
