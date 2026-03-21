@@ -3,6 +3,8 @@
 The announcer will exclaim "Holy shit!"
 when someone _almost_ wins (or almost doesn't).
 
+https://github.com/user-attachments/assets/8f185eef-39a1-4dc9-95de-78c4feb2ea12
+
 As you might know, in the original Quake III Arena (and Team Arena)
 if one gets killed while being very close to scoring the flag
 or the cubes, the announcer will exclaim "Holy Shit!".
