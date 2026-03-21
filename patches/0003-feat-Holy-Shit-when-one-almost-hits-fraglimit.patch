@@ -1,4 +1,4 @@
-From 89d6ce9ad1cfe404f561830f4c2f8217a5a5ab7a Mon Sep 17 00:00:00 2001
+From 46216aba2ff0604c5ea7839663677a679fa5ed96 Mon Sep 17 00:00:00 2001
 From: WofWca <wofwca@protonmail.com>
 Date: Wed, 18 Mar 2026 23:03:43 +0400
 Subject: [PATCH] feat: "Holy Shit!" when one almost hits fraglimit
@@ -6,8 +6,8 @@ Subject: [PATCH] feat: "Holy Shit!" when one almost hits fraglimit
 ---
  code/game/g_combat.c |  8 ++++
  code/game/g_local.h  | 13 +++++++
- code/game/g_main.c   | 89 +++++++++++++++++++++++++++++++++++++++++++-
- 3 files changed, 109 insertions(+), 1 deletion(-)
+ code/game/g_main.c   | 93 +++++++++++++++++++++++++++++++++++++++++++-
+ 3 files changed, 113 insertions(+), 1 deletion(-)
 
 diff --git a/code/game/g_combat.c b/code/game/g_combat.c
 index ba4df138..b22c316d 100644
@@ -53,7 +53,7 @@ index 7931f2dd..7144df00 100644
  } clientPersistant_t;
  
 diff --git a/code/game/g_main.c b/code/game/g_main.c
-index dba12900..35c3b02d 100644
+index dba12900..7431e664 100644
 --- a/code/game/g_main.c
 +++ b/code/game/g_main.c
 @@ -1322,6 +1322,7 @@ can see the last frag.
@@ -98,11 +98,19 @@ index dba12900..35c3b02d 100644
  				LogExit( "Fraglimit hit." );
  				G_BroadcastServerCommand( -1, va("print \"%s" S_COLOR_WHITE " hit the fraglimit.\n\"",
  					cl->pers.netname ) );
-@@ -1411,6 +1423,81 @@ static void CheckExitRules( void ) {
+@@ -1411,6 +1423,85 @@ static void CheckExitRules( void ) {
  	}
  }
  
 +#ifndef NO_HOLYSHIT_MOD
++static void PlayGlobalHolyshitSound() {
++	gentity_t *te;
++
++	te = G_TempEntity( vec3_origin, EV_GLOBAL_SOUND );
++	te->s.eventParm = G_SoundIndex( "sound/feedback/voc_holyshit.wav" );
++	te->r.svFlags |= SVF_BROADCAST;
++}
++
 +/*
 +=============
 +CheckAlmostHitFraglimit
@@ -124,9 +132,9 @@ index dba12900..35c3b02d 100644
 +		return;
 +	}
 +
-+	// Ensure that there _is_ a winner already.
-+	// We expect that this is always true if this function got called,
-+	// but let's double-check.
++	// Ensure that there _is_ a winner.
++	// As of writing this could be false e.g. if this is a team game,
++	// or a game with no fraglimit.
 +	for ( i = 0 ; i < level.maxclients ; i++ ) {
 +		cl = level.clients + i;
 +		if ( cl->pers.isWinner ) {
@@ -155,23 +163,19 @@ index dba12900..35c3b02d 100644
 +		// due to the fraglimit changing to a lower value.
 +		// We should not play the sound in those cases.
 +		//
-+		// Doing the strict comparison (`== g_fraglimit`) rather than `>=`
++		// Doing the "equal" comparison (`== g_fraglimit`) rather than `>=`
 +		// improves the situation, but doesn't solve it entirely.
 +		if ( cl->pers.imaginaryScore == g_fraglimit.integer &&
 +			!cl->pers.isWinner &&
 +			// Note that it's possible that we play the sound
 +			// for multiple players.
 +			!cl->pers.isAlmostWinner ) {
-+			gentity_t *te;
 +
 +			cl->pers.isAlmostWinner = qtrue;
 +
 +			G_BroadcastServerCommand( -1, va("print \"%s" S_COLOR_YELLOW " almost" S_COLOR_WHITE " hit the fraglimit.\n\"",
 +				cl->pers.netname ) );
-+
-+			te = G_TempEntity( vec3_origin, EV_GLOBAL_SOUND );
-+			te->s.eventParm = G_SoundIndex( "sound/feedback/voc_holyshit.wav" );
-+			te->r.svFlags |= SVF_BROADCAST;
++			PlayGlobalHolyshitSound();
 +		}
 +	}
 +}
