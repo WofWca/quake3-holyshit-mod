@@ -1374,12 +1374,22 @@ static void CheckExitRules( void ) {
 
 	if ( haveFraglimit ) {
 		if ( level.teamScores[TEAM_RED] >= g_fraglimit.integer ) {
+#ifndef NO_HOLYSHIT_MOD
+			InitHolyshit();
+			level.teamHitFraglimit[TEAM_RED] = qtrue;
+#endif
+
 			G_BroadcastServerCommand( -1, "print \"Red hit the fraglimit.\n\"" );
 			LogExit( "Fraglimit hit." );
 			return;
 		}
 
 		if ( level.teamScores[TEAM_BLUE] >= g_fraglimit.integer ) {
+#ifndef NO_HOLYSHIT_MOD
+			InitHolyshit();
+			level.teamHitFraglimit[TEAM_BLUE] = qtrue;
+#endif
+
 			G_BroadcastServerCommand( -1, "print \"Blue hit the fraglimit.\n\"" );
 			LogExit( "Fraglimit hit." );
 			return;
@@ -1440,6 +1450,10 @@ static void InitHolyshit( void ) {
 	int			i;
 	gclient_t	*cl;
 
+	// assert( sizeof( level.imaginaryTeamScores ) == sizeof( level.teamScores ) );
+	memcpy( level.imaginaryTeamScores, level.teamScores, sizeof( level.imaginaryTeamScores ) );
+	memset( level.teamHitFraglimit, 0, sizeof( level.teamHitFraglimit ) );
+
 	for ( i = 0 ; i < level.maxclients ; i++ ) {
 		cl = level.clients + i;
 
@@ -1473,6 +1487,37 @@ See also `CheckAlmostCapture` and `CheckAlmostScored`.
 =============
 */
 static void CheckAlmostHitFraglimit( void ) {
+	if ( !level.intermissionQueued ) {
+		// This function should not be called when `!level.intermissionQueued`.
+		return;
+	}
+	CheckTeamAlmostHitFraglimit();
+	CheckPlayerAlmostHitFraglimit();
+}
+static void CheckTeamAlmostHitFraglimit( void ) {
+	if ( !level.intermissionQueued ) {
+		// This function should not be called when `!level.intermissionQueued`.
+		return;
+	}
+
+	// Unlike with `cl->pers.imaginaryScore`, this is a `>=` comparison,
+	// because in Harvest mode one can score more than one point,
+	// so we can't use `==`.
+	if ( level.imaginaryTeamScores[TEAM_RED] >= g_fraglimit.integer &&
+		!level.teamHitFraglimit[TEAM_RED] ) {
+		level.teamHitFraglimit[TEAM_RED] = qtrue;
+		G_BroadcastServerCommand( -1, "print \"Red " S_COLOR_YELLOW "almost" S_COLOR_WHITE " hit the fraglimit.\n\"" );
+		PlayGlobalHolyshitSound();
+	}
+
+	if ( level.imaginaryTeamScores[TEAM_BLUE] >= g_fraglimit.integer &&
+		!level.teamHitFraglimit[TEAM_BLUE] ) {
+		level.teamHitFraglimit[TEAM_BLUE] = qtrue;
+		G_BroadcastServerCommand( -1, "print \"Blue " S_COLOR_YELLOW "almost" S_COLOR_WHITE " hit the fraglimit.\n\"" );
+		PlayGlobalHolyshitSound();
+	}
+}
+static void CheckPlayerAlmostHitFraglimit( void ) {
 	int			i;
 	int 		winnerInd = -1;
 	gclient_t	*cl;

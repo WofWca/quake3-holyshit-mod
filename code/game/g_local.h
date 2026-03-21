@@ -386,6 +386,13 @@ typedef struct {
 	int			msec;					// current frame duration
 
 	int			teamScores[TEAM_NUM_TEAMS];
+#ifndef NO_HOLYSHIT_MOD
+	// These should only be checked after match end, when `intermissionQueued`.
+	int			imaginaryTeamScores[TEAM_NUM_TEAMS];
+	// Whether a team has hit the fraglimit, with its `imaginaryTeamScores`.
+	qboolean	teamHitFraglimit[TEAM_NUM_TEAMS];
+#endif
+
 	int			lastTeamLocationTime;		// last time of client team location update
 
 	qboolean	newSession;				// don't use any old session data, because
