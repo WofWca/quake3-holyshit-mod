@@ -252,7 +252,7 @@ typedef struct {
 	// On match end, client disconnect, etc.
 	// By storing on `clientPersistant_t` we get that for free.
 	qboolean	isWinner;
-	qboolean	isAlmostWinner;
+	qboolean	hasHitFraglimit;
 #endif
 
 	qboolean	inGame;

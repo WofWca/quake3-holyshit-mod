@@ -1407,6 +1407,7 @@ static void CheckExitRules( void ) {
 			if ( cl->ps.persistant[PERS_SCORE] >= g_fraglimit.integer ) {
 #ifndef NO_HOLYSHIT_MOD
 				InitHolyshit();
+				cl->pers.hasHitFraglimit = qtrue;
 				cl->pers.isWinner = qtrue;
 #endif
 
@@ -1439,7 +1440,8 @@ static void CheckExitRules( void ) {
 =============
 InitHolyshit
 
-Sync imaginary scores to real scores, reset the `isWinner` fields.
+Sync imaginary scores to real scores, reset the `isWinner`,
+`hasHitFraglimit` fields.
 
 This should be called at match end, to ensure that the relevant fields
 don't keep values from the previous match or something,
@@ -1463,7 +1465,7 @@ static void InitHolyshit( void ) {
 		cl->pers.imaginaryScore = cl->ps.persistant[PERS_SCORE];
 		// And ensure that these are cleared.
 		cl->pers.isWinner = qfalse;
-		cl->pers.isAlmostWinner = qfalse;
+		cl->pers.hasHitFraglimit = qfalse;
 	}
 }
 
@@ -1564,9 +1566,9 @@ static void CheckPlayerAlmostHitFraglimit( void ) {
 			!cl->pers.isWinner &&
 			// Note that it's possible that we play the sound
 			// for multiple players.
-			!cl->pers.isAlmostWinner ) {
+			!cl->pers.hasHitFraglimit ) {
 
-			cl->pers.isAlmostWinner = qtrue;
+			cl->pers.hasHitFraglimit = qtrue;
 
 			G_BroadcastServerCommand( -1, va("print \"%s" S_COLOR_YELLOW " almost" S_COLOR_WHITE " hit the fraglimit.\n\"",
 				cl->pers.netname ) );
