@@ -27,6 +27,27 @@ This is necessary for the mod to work in Free For All.
 Frags made during that period will not affect the scores,
 so don't worry, this doesn't really change gameplay.
 
+## How it works
+
+This is a fully server-side mod.
+
+In the original Quake III, when a match ends,
+e.g. if someone hits the frag limit,
+the server sets the `intermissionQueued` variable.
+A second after that we go to the intermission,
+i.e. the scoreboard or the podium.
+During that second players don't receive damage,
+so fragging cannot happen.
+
+What this mod does is it allow fragging,
+but in case `intermissionQueued` is set
+then we don't increase the actual score
+but instead write it to a separate variable.
+Then, as long as `intermissionQueued` is set,
+we keep checking whether another player or team, besides the winner,
+has hit the fraglimit.
+If so, we play da sound.
+
 ## Integrating into other mods
 
 Apply the patches with `git am`.
