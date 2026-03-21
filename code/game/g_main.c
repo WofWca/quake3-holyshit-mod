@@ -1440,8 +1440,8 @@ static void CheckExitRules( void ) {
 =============
 InitHolyshit
 
-Sync imaginary scores to real scores, reset the `isWinner`,
-`hasHitFraglimit` fields.
+Sync imaginary scores to real scores, reset `isWinner`,
+set `hasHitFraglimit`.
 
 This should be called at match end, to ensure that the relevant fields
 don't keep values from the previous match or something,
@@ -1454,7 +1454,11 @@ static void InitHolyshit( void ) {
 
 	// assert( sizeof( level.imaginaryTeamScores ) == sizeof( level.teamScores ) );
 	memcpy( level.imaginaryTeamScores, level.teamScores, sizeof( level.imaginaryTeamScores ) );
-	memset( level.teamHitFraglimit, 0, sizeof( level.teamHitFraglimit ) );
+	// Note that `fraglimit 0` means "no fraglimit".
+	// We are fine with this here.
+	for ( i = 0 ; i < TEAM_NUM_TEAMS ; i++ ) {
+		level.teamHitFraglimit[i] = level.imaginaryTeamScores[i] >= g_fraglimit.integer;
+	}
 
 	for ( i = 0 ; i < level.maxclients ; i++ ) {
 		cl = level.clients + i;
@@ -1465,7 +1469,7 @@ static void InitHolyshit( void ) {
 		cl->pers.imaginaryScore = cl->ps.persistant[PERS_SCORE];
 		// And ensure that these are cleared.
 		cl->pers.isWinner = qfalse;
-		cl->pers.hasHitFraglimit = qfalse;
+		cl->pers.hasHitFraglimit = cl->pers.imaginaryScore >= g_fraglimit.integer;
 	}
 }
 
@@ -1554,6 +1558,7 @@ static void CheckPlayerAlmostHitFraglimit( void ) {
 			continue;
 		}
 
+		// TODO remove this comment
 		// TODO the fraglimit might change after match end
 		// but before intermission.
 		// Also multiple players can "hit the fraglimit"
@@ -1562,7 +1567,7 @@ static void CheckPlayerAlmostHitFraglimit( void ) {
 		//
 		// Doing the "equal" comparison (`== g_fraglimit`) rather than `>=`
 		// improves the situation, but doesn't solve it entirely.
-		if ( cl->pers.imaginaryScore == g_fraglimit.integer &&
+		if ( cl->pers.imaginaryScore >= g_fraglimit.integer &&
 			!cl->pers.isWinner &&
 			// Note that it's possible that we play the sound
 			// for multiple players.
