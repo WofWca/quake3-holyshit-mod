@@ -1,4 +1,4 @@
-From 112680db967489da9b3221b837f2ddfa2ae66edd Mon Sep 17 00:00:00 2001
+From ac6c46a9c757c93d6a753e0a61207bb13bac5ff1 Mon Sep 17 00:00:00 2001
 From: WofWca <wofwca@protonmail.com>
 Date: Wed, 18 Mar 2026 21:40:44 +0400
 Subject: [PATCH] feat: `g_canDamageAfterMatchEnd` CVAR, default `1`

@@ -1,4 +1,4 @@
-From fd6a94649c459a51792b8751dc33c06eb8a5925d Mon Sep 17 00:00:00 2001
+From a944c5a8d45f6a0a629256156d54b6c7118e7df0 Mon Sep 17 00:00:00 2001
 From: WofWca <wofwca@protonmail.com>
 Date: Sat, 21 Mar 2026 16:47:29 +0400
 Subject: [PATCH] fix: "Holy shit!" on subsequent same map matches
@@ -23,7 +23,7 @@ as suggested in out TODO comment.
  2 files changed, 29 insertions(+), 5 deletions(-)
 
 diff --git a/code/game/g_combat.c b/code/game/g_combat.c
-index b22c316d..060e8370 100644
+index 544e3143..eca9bed5 100644
 --- a/code/game/g_combat.c
 +++ b/code/game/g_combat.c
 @@ -55,11 +55,6 @@ void AddScore( gentity_t *ent, vec3_t origin, int score ) {

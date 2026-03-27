@@ -1,13 +1,13 @@
-From 9ef88f2c279d315f2a0724803f8f4d16fae934c0 Mon Sep 17 00:00:00 2001
+From de28b8f3f0ec51553d4cc0f3ddd905d71df00cb3 Mon Sep 17 00:00:00 2001
 From: WofWca <wofwca@protonmail.com>
 Date: Sat, 21 Mar 2026 18:32:25 +0400
 Subject: [PATCH] feat: "Holy Shit!" when team almost hits fraglimit
 
 ---
  code/game/g_local.h |  7 +++++++
- code/game/g_main.c  | 31 +++++++++++++++++++++++++++++++
+ code/game/g_main.c  | 45 +++++++++++++++++++++++++++++++++++++++++++++
  code/game/g_team.c  |  3 +++
- 3 files changed, 41 insertions(+)
+ 3 files changed, 55 insertions(+)
 
 diff --git a/code/game/g_local.h b/code/game/g_local.h
 index 7144df00..53979691 100644
@@ -28,7 +28,7 @@ index 7144df00..53979691 100644
  
  	qboolean	newSession;				// don't use any old session data, because
 diff --git a/code/game/g_main.c b/code/game/g_main.c
-index 984c1a54..9a07368b 100644
+index 984c1a54..699a75cd 100644
 --- a/code/game/g_main.c
 +++ b/code/game/g_main.c
 @@ -1374,12 +1374,22 @@ static void CheckExitRules( void ) {
@@ -65,10 +65,23 @@ index 984c1a54..9a07368b 100644
  	for ( i = 0 ; i < level.maxclients ; i++ ) {
  		cl = level.clients + i;
  
-@@ -1482,6 +1496,23 @@ static void CheckAlmostHitFraglimit( void ) {
- 		return;
- 	}
- 
+@@ -1473,6 +1487,37 @@ See also `CheckAlmostCapture` and `CheckAlmostScored`.
+ =============
+ */
+ static void CheckAlmostHitFraglimit( void ) {
++	if ( !level.intermissionQueued ) {
++		// This function should not be called when `!level.intermissionQueued`.
++		return;
++	}
++	CheckTeamAlmostHitFraglimit();
++	CheckPlayerAlmostHitFraglimit();
++}
++static void CheckTeamAlmostHitFraglimit( void ) {
++	if ( !level.intermissionQueued ) {
++		// This function should not be called when `!level.intermissionQueued`.
++		return;
++	}
++
 +	// Unlike with `cl->pers.imaginaryScore`, this is a `>=` comparison,
 +	// because in Harvest mode one can score more than one point,
 +	// so we can't use `==`.
@@ -85,10 +98,11 @@ index 984c1a54..9a07368b 100644
 +		G_BroadcastServerCommand( -1, "print \"Blue " S_COLOR_YELLOW "almost" S_COLOR_WHITE " hit the fraglimit.\n\"" );
 +		PlayGlobalHolyshitSound();
 +	}
-+
- 	// Ensure that there _is_ a winner.
- 	// As of writing this could be false e.g. if this is a team game,
- 	// or a game with no fraglimit.
++}
++static void CheckPlayerAlmostHitFraglimit( void ) {
+ 	int			i;
+ 	int 		winnerInd = -1;
+ 	gclient_t	*cl;
 diff --git a/code/game/g_team.c b/code/game/g_team.c
 index 53ee9e53..905e1a7c 100644
 --- a/code/game/g_team.c

@@ -1,4 +1,4 @@
-From 46216aba2ff0604c5ea7839663677a679fa5ed96 Mon Sep 17 00:00:00 2001
+From 3ed9f40745a5f83f0dfe5caac70f0ee3b458eda6 Mon Sep 17 00:00:00 2001
 From: WofWca <wofwca@protonmail.com>
 Date: Wed, 18 Mar 2026 23:03:43 +0400
 Subject: [PATCH] feat: "Holy Shit!" when one almost hits fraglimit
@@ -10,7 +10,7 @@ Subject: [PATCH] feat: "Holy Shit!" when one almost hits fraglimit
  3 files changed, 113 insertions(+), 1 deletion(-)
 
 diff --git a/code/game/g_combat.c b/code/game/g_combat.c
-index ba4df138..b22c316d 100644
+index 2a7eb8a3..544e3143 100644
 --- a/code/game/g_combat.c
 +++ b/code/game/g_combat.c
 @@ -54,6 +54,14 @@ void AddScore( gentity_t *ent, vec3_t origin, int score ) {

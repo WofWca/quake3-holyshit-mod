@@ -1,4 +1,4 @@
-From f280e7cc05cbf5566b231c7e07f9ca69f1dd48db Mon Sep 17 00:00:00 2001
+From 56a0d5ece7dd403741e9867d93e8498040102342 Mon Sep 17 00:00:00 2001
 From: WofWca <wofwca@protonmail.com>
 Date: Mon, 16 Mar 2026 22:25:29 +0400
 Subject: [PATCH] fix: don't change scores after match end

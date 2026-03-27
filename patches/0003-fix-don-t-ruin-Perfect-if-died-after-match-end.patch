@@ -1,0 +1,29 @@
+From 88afff596a413edfccede53db7195e33120a1413 Mon Sep 17 00:00:00 2001
+From: WofWca <wofwca@protonmail.com>
+Date: Fri, 27 Mar 2026 16:46:41 +0400
+Subject: [PATCH] fix: don't ruin "Perfect" if died after match end
+
+---
+ code/game/g_combat.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/code/game/g_combat.c b/code/game/g_combat.c
+index ba4df138..2a7eb8a3 100644
+--- a/code/game/g_combat.c
++++ b/code/game/g_combat.c
+@@ -552,7 +552,11 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
+ 
+ 	self->enemy = attacker;
+ 
+-	self->client->ps.persistant[PERS_KILLED]++;
++	// Check `level.intermissionQueued` so as to not ruin the "Perfect" award
++	// if the player got killed after the match has already ended.
++	if ( !level.intermissionQueued ) {
++		self->client->ps.persistant[PERS_KILLED]++;
++	}
+ 
+ 	if (attacker && attacker->client) {
+ 		attacker->client->lastkilled_client = self->s.number;
+-- 
+2.43.0
+
